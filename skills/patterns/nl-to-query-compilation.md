@@ -1,30 +1,62 @@
 # NL → Query Compilation — Pattern
 
-Teaches the generative orchestrator to translate natural language into structured API parameters by embedding glossaries in `modelDescription`. No custom model training, no topic-level code — the orchestrator does NL→Query on the fly at plan time.
+Teaches the generative orchestrator to translate natural language into structured API parameters by enriching `modelDescription` with field descriptions, filter guidance, and code glossaries. No custom model training, no topic-level code — the orchestrator does NL→Query on the fly at plan time.
+
+## When to Use This
+
+**Every API tool benefits from an enriched `modelDescription`.** The default description from an OpenAPI spec upload is usually just the `summary` — not enough for the orchestrator to understand what each field means, what values are valid, or how to filter results. At minimum, describe what the API returns, what each parameter controls, and what values to use.
+
+The pattern scales from light to heavy depending on the API:
+
+| API type | What to put in modelDescription |
+|----------|-------------------------------|
+| **Simple REST** (free-text search, obvious params) | What the API does, what each param means, expected formats (`YYYY-MM-DD`) |
+| **Enum-heavy APIs** (status codes, category filters) | Field descriptions + valid enum values with human-readable labels |
+| **Coded/SDMX APIs** (opaque dimension keys, indicator codes) | Full glossary mapping user terms to API codes |
 
 ## The Problem
 
-Structured APIs use codes, IDs, and dimension keys that users don't know:
+The orchestrator picks tools and fills parameters using `modelDescription` and input `description` fields. Without enrichment:
+
+- It doesn't know what fields exist or what they mean
+- It can't map user language to the right filter values
+- It falls back to guessing parameter values — often wrong
+
+This is worst with APIs that use opaque codes:
 
 - SDMX: `B.U2.EUR.4F.KR.MRR_FR.LEV` → "ECB main refinancing rate"
 - REST: `indicator=NY.GDP.MKTP.KD.ZG` → "GDP growth"
 - Filters: `coicop=CP00&unit=RCH_A` → "headline inflation, annual rate of change"
 
-Users say "What's the ECB refi rate?" — the orchestrator needs to map that to correct API parameters without asking the user for codes.
+But even straightforward APIs suffer — if the orchestrator doesn't know that `status` accepts `active|archived|draft`, it will guess or omit the parameter entirely.
 
 ## The Solution
 
-Put mapping glossaries in each tool's `modelDescription` field. The orchestrator reads `modelDescription` at plan time when deciding which tool to call and what values to pass to `AutomaticTaskInput` parameters.
+Enrich each tool's `modelDescription` with field descriptions, filter guidance, and — for coded APIs — explicit glossaries that map user terms to API values. The orchestrator reads `modelDescription` at plan time when deciding which tool to call and what values to pass to `AutomaticTaskInput` parameters.
 
 Edit `modelDescription` via `edit-action` after cloning the agent locally.
 
-### Glossary Format
+### Levels of Enrichment
+
+**Light** — describe what the API does and what each param means:
+```yaml
+modelDescription: Searches the product catalog. 'category' filters by product category (electronics, clothing, home, sports). 'sort' orders results (price-asc, price-desc, rating, newest). 'q' is free-text search. 'inStock' is true/false.
+```
+
+**Medium** — add enum values with human labels:
+```yaml
+modelDescription: Retrieves HR policy documents. 'region' accepts NA (North America), EMEA (Europe/Middle East/Africa), APAC (Asia-Pacific). 'policyType' accepts wfh (work from home), travel, benefits, leave. 'effectiveDate' in YYYY-MM-DD.
+```
+
+**Full glossary** — map user terms to opaque codes:
+
+### Glossary Format (for coded APIs)
 
 ```
 GLOSSARY: "[user term]"/"[alias]"->[paramName]=[value]. "[user term]"->[param]=[value] [param2]=[value2]. [paramName]=FORMAT_HINT. [fixedParam]=[default].
 ```
 
-### Example
+### Full Glossary Example
 
 ```yaml
 modelDescription: Retrieves ECB monetary and exchange rate data via SDMX. GLOSSARY: "refi rate"/"MRR"/"main refinancing rate"->flowRef=FM key=B.U2.EUR.4F.KR.MRR_FR.LEV. "deposit rate"/"DFR"->flowRef=FM key=B.U2.EUR.4F.KR.DFR.LEV. "marginal lending"/"MLF"->flowRef=FM key=B.U2.EUR.4F.KR.MLF_FR.LEV. "EUR/USD"/"euro dollar"->flowRef=EXR key=D.USD.EUR.SP00.A. startPeriod/endPeriod=YYYY-MM. format=jsondata.
