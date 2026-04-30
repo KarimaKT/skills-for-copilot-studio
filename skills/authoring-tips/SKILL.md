@@ -39,3 +39,23 @@ Prevents child agents (connected agents) from sending messages directly to the u
 - The user wants a child agent to return data without messaging the user
 - The user is confused about the completion setting on a child agent
 - The parent agent needs to control all user-facing responses
+
+## OpenAPI HTTP API Tools → [openapi-http-api-tools.md](openapi-http-api-tools.md)
+
+Writing OpenAPI specs for public HTTP/REST APIs and uploading them as plugin tools. Covers spec authoring rules (response `type: object`, format defaults), the upload "Add input" parameter gotcha, and common runtime errors.
+
+**Read this tip when:**
+- The user is writing an OpenAPI spec for a public REST API
+- A plugin tool upload fails or returns errors at runtime
+- The user gets `JsonReaderException`, `Expecting Record but received Table`, or missing parameters
+- The user asks about the difference between OpenAPI plugin tools and connector actions
+
+## Data Visualization → [data-visualization.md](data-visualization.md)
+
+Options for showing charts, diagrams, and structured data in agent responses: QuickChart.io (Chart.js charts via URL), Mermaid.ink (diagrams via URL), and Adaptive Cards (native tables and layouts).
+
+**Read this tip when:**
+- The user wants to display charts or graphs in agent responses
+- An API returns binary data (images, PDFs) that can't be a plugin tool
+- The user asks about QuickChart, Mermaid, or Adaptive Cards in Copilot Studio
+- The user needs to visualize data from API tool calls

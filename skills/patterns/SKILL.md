@@ -39,6 +39,16 @@ Uses `AutomaticTaskInput` to let the orchestrator's LLM classify or extract stru
 - The user wants to classify user intent without an explicit question or AI Prompt
 - The user asks about `AutomaticTaskInput`, `shouldPromptUser`, or orchestrator-generated inputs
 
+## NL → Query Compilation → [nl-to-query-compilation.md](nl-to-query-compilation.md)
+
+Teaches the orchestrator to translate natural language into structured API parameters by embedding glossaries in `modelDescription`. Maps user terms like "refi rate" to API codes like `B.U2.EUR.4F.KR.MRR_FR.LEV` — no custom model, no topic-level code.
+
+**Read this pattern when:**
+- API tools use codes, IDs, or structured query syntax the user shouldn't need to know
+- The orchestrator is passing wrong parameter values to an API tool
+- The user needs a glossary mapping natural language to API values
+- The user asks where API mappings belong (modelDescription vs agent instructions)
+
 ## Combining Patterns
 
 You can combine more than one pattern. For example, when using both glossary and user context, merge them into a **single** `conversation-init` topic rather than creating separate OnActivity topics. Use the template at `${CLAUDE_SKILL_DIR}/../../templates/topics/conversation-init.topic.mcs.yml`. The individual files explain the details.
